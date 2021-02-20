@@ -1,16 +1,18 @@
 const Engine = Matter.Engine;
 const World= Matter.World;
+const Body = Matter.Body;
 const Bodies = Matter.Bodies;
 const Constraint = Matter.Constraint;
 
 var engine, world;
 var box1, pig1,pig3;
-var backgroundImg,platform;
-var bird, slingshot;
+var backgroundImg,platform, leftWall, rightWall, ceiling;
+var bird1, bird2, bird3, slingshot, birdArray = [];
 
 var gameState = "onSling";
 var bg = "sprites/bg1.png";
 var score = 0;
+var attempts = 0;
 
 function preload() {
     getBackgroundImg();
@@ -24,6 +26,9 @@ function setup(){
 
     ground = new Ground(600,height,1200,20);
     platform = new Ground(150, 305, 300, 170);
+    leftWall = new Ground(0,height/2,10,height);
+    rightWall = new Ground(width,height/2,10,height);
+    ceiling = new Ground(width/2,0,width,10);
 
     box1 = new Box(700,320,70,70);
     box2 = new Box(920,320,70,70);
@@ -40,10 +45,15 @@ function setup(){
     log4 = new Log(760,120,150, PI/7);
     log5 = new Log(870,120,150, -PI/7);
 
-    bird = new Bird(200,50);
+    bird1 = new Bird(200,50);
+    bird2 = new Bird(150,50);
+    bird3 = new Bird(100,50);
+    birdArray.push(bird3);
+    birdArray.push(bird2);
+    birdArray.push(bird1);
 
     //log6 = new Log(230,180,80, PI/2);
-    slingshot = new SlingShot(bird.body,{x:200, y:50});
+    slingshot = new SlingShot(bird1.body,{x:200, y:50});
 }
 
 function draw(){
@@ -74,28 +84,44 @@ function draw(){
     log4.display();
     log5.display();
 
-    bird.display();
+    bird1.display();
+    bird2.display();
+    bird3.display();
     platform.display();
     //log6.display();
-    slingshot.display();    
+    slingshot.display();
+
+    //console.log(bird.body.speed);
+    if(bird1.body.position.x < 0 || bird1.body.position.x > width) {
+        Body.setPosition(bird1.body,{x:200,y:50});
+    }
+    for (var i = birdArray.length-1; i >= 0; i--) {
+        if(keyCode === 32 && birdArray[i].body.speed <= 0.278) {
+            birdArray[i].trajectory = [];
+            gameState = 'onSling';
+            Body.setPosition(birdArray[i].body,{x:200,y:50});
+            //if(i>0) {
+                slingshot.attach(birdArray[i-1]);
+            //}
+        }
+    }
 }
 
 function mouseDragged(){
-    //if (gameState!=="launched"){
-        Matter.Body.setPosition(bird.body, {x: mouseX , y: mouseY});
-    //}
+    if (gameState!=="launched"){
+        Matter.Body.setPosition(bird1.body, {x: mouseX , y: mouseY});
+    }
 }
 
 
 function mouseReleased(){
     slingshot.fly();
+    birdArray.pop();
     gameState = "launched";
 }
 
 function keyPressed(){
-    if(keyCode === 32){
-       slingshot.attach(bird.body);
-    }
+    
 }
 
 async function getBackgroundImg(){
